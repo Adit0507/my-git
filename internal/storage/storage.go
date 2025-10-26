@@ -28,6 +28,8 @@ func (s *Storage) WriteObject(obj objects.Object) (string, error) {
 	hash := obj.Hash()
 	objectPath := s.getObjectPath(hash)
 
+	objectPath = filepath.Clean(objectPath)
+
 	// checkin if object already exists
 	if _, err := os.Stat(objectPath); err != nil {
 		return hash, nil
@@ -49,7 +51,7 @@ func (s *Storage) WriteObject(obj objects.Object) (string, error) {
 
 	header := fmt.Sprintf("%s %d\x00", obj.Type(), len(obj.Serialize()))
 	if _, err := writer.Write([]byte(header)); err != nil {
-		return  "", err
+		return "", err
 	}
 	if _, err := writer.Write(obj.Serialize()); err != nil {
 		return "", err
@@ -60,6 +62,8 @@ func (s *Storage) WriteObject(obj objects.Object) (string, error) {
 
 func (s *Storage) ReadObject(hash string) ([]byte, objects.ObjectType, error) {
 	objectPath := s.getObjectPath(hash)
+
+	objectPath = filepath.Clean(objectPath)
 
 	file, err := os.Open(objectPath)
 	if err != nil {
@@ -80,7 +84,7 @@ func (s *Storage) ReadObject(hash string) ([]byte, objects.ObjectType, error) {
 
 	nullIdx := 0
 	for i, b := range data {
-		if b ==0{
+		if b == 0 {
 			nullIdx = i
 			break
 		}
@@ -92,7 +96,7 @@ func (s *Storage) ReadObject(hash string) ([]byte, objects.ObjectType, error) {
 	var size int
 	fmt.Sscanf(header, "%s %d", &objType, &size)
 
-	content := data[nullIdx+ 1:]
+	content := data[nullIdx+1:]
 
 	return content, objects.ObjectType(objType), nil
 }
